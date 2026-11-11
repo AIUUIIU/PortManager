@@ -23,10 +23,11 @@ void Check(string name, bool ok, string detail = "")
 
 Console.WriteLine("=== 1. 端口表扫描 ===");
 var entries = PortScanner.Scan();
-Check("能读到端口记录", entries.Count > 100, $"{entries.Count} 条");
+// 不设固定条数阈值：干净的 CI 机器端口数量远少于开发机
+Check("能读到端口记录", entries.Count > 0, $"{entries.Count} 条");
 Check("包含监听状态记录", entries.Any(e => e.State == "LISTENING"),
     $"{entries.Count(e => e.State == "LISTENING")} 个监听");
-Check("进程名已解析", entries.Count(e => e.Name.EndsWith(".exe")) > 50,
+Check("进程名已解析", entries.Count(e => e.Name.EndsWith(".exe")) > 0,
     $"{entries.Count(e => e.Name.EndsWith(".exe"))} 条有进程名");
 Check("地址格式正确", entries.All(e => e.Local.Contains(':')),
     entries.FirstOrDefault(e => e.Port == 8080)?.Local ?? "无 8080");
