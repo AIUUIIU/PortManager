@@ -120,13 +120,13 @@ public sealed class Localizer : INotifyPropertyChanged
     public string KillDone(string name, int pid) => T($"已结束 {name} (PID {pid})", $"Ended {name} (PID {pid})");
     public string AlreadyGone(int pid) => T($"PID {pid} 的进程已不存在（可能已自行退出）",
         $"Process {pid} no longer exists (it may have already exited)");
-    public string AccessDenied => T("权限不足：该进程需要以管理员身份运行端口管家才能结束",
+    public string AccessDenied => T("权限不足：该进程需要以管理员身份运行 Port Manager 才能结束",
         "Access denied: run Port Manager as administrator to end this process");
     public string KillFailed(string message) => T($"结束失败：{message}", $"Failed to end process: {message}");
     public string InvalidPid => T("无效的 PID", "Invalid PID");
     public string ProtectedProcess(string name) => T($"{name} 属于系统关键进程，已阻止结束操作",
         $"{name} is a critical system process and cannot be ended");
-    public string CannotKillSelf => T("不能结束端口管家自身进程", "Cannot end Port Manager itself");
+    public string CannotKillSelf => T("不能结束 Port Manager 自身进程", "Cannot end Port Manager itself");
 
     /* ---------------- 通知 ---------------- */
 
