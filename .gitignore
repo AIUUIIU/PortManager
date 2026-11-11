@@ -68,7 +68,7 @@ shot-*.png
 icon-preview.png
 *.zip
 *.7z
-publish/
+build/
 
 # CI 生成的 Release 正文
 release-body.md
