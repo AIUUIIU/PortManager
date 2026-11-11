@@ -70,6 +70,9 @@ icon-preview.png
 *.7z
 publish/
 
+# CI 生成的 Release 正文
+release-body.md
+
 # OS junk
 Thumbs.db
 ehthumbs.db
