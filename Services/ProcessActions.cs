@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 
@@ -40,6 +41,68 @@ public static class ProcessActions
     };
 
     private static bool IsPseudoProcess(string processName) => PseudoNames.Contains(processName);
+
+    /* ---------------- 父进程查询：Toolhelp 快照 ---------------- */
+
+    private const uint TH32CS_SNAPPROCESS = 0x00000002;
+    private static readonly IntPtr InvalidHandle = new(-1);
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    private struct PROCESSENTRY32W
+    {
+        public uint dwSize;
+        public uint cntUsage;
+        public uint th32ProcessID;
+        public IntPtr th32DefaultHeapID;
+        public uint th32ModuleID;
+        public uint cntThreads;
+        public uint th32ParentProcessID;
+        public int pcPriClassBase;
+        public uint dwFlags;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
+        public string szExeFile;
+    }
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern IntPtr CreateToolhelp32Snapshot(uint dwFlags, uint th32ProcessID);
+
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    private static extern bool Process32FirstW(IntPtr hSnapshot, ref PROCESSENTRY32W lppe);
+
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    private static extern bool Process32NextW(IntPtr hSnapshot, ref PROCESSENTRY32W lppe);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool CloseHandle(IntPtr hObject);
+
+    /// <summary>
+    /// 取父进程 PID。走 Toolhelp 快照，毫秒级且不需要 WMI——
+    /// 冷启动的 WMI 查询在干净机器上可能耗时数秒，不能拿它决定父 PID 是否有值。
+    /// </summary>
+    private static int GetParentPid(int pid)
+    {
+        IntPtr snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+        if (snapshot == InvalidHandle) return 0;
+
+        try
+        {
+            var entry = new PROCESSENTRY32W { dwSize = (uint)Marshal.SizeOf<PROCESSENTRY32W>() };
+            if (!Process32FirstW(snapshot, ref entry)) return 0;
+
+            do
+            {
+                if (entry.th32ProcessID == (uint)pid) return (int)entry.th32ParentProcessID;
+                entry.dwSize = (uint)Marshal.SizeOf<PROCESSENTRY32W>();
+            }
+            while (Process32NextW(snapshot, ref entry));
+
+            return 0;
+        }
+        finally
+        {
+            CloseHandle(snapshot);
+        }
+    }
 
     public static bool IsProtected(int pid, string name)
     {
@@ -88,7 +151,7 @@ public static class ProcessActions
         }
     }
 
-    /// <summary>读取进程详情；命令行与父进程通过 CIM 查询（按需调用）</summary>
+    /// <summary>读取进程详情；命令行通过 CIM 查询（按需调用，失败不影响其他字段）</summary>
     public static ProcessDetail GetDetail(int pid)
     {
         var detail = new ProcessDetail();
@@ -112,7 +175,11 @@ public static class ProcessActions
             return detail;
         }
 
-        // 命令行 + 父进程：仅在打开详情时查询一次（脚本内只用单引号，避免参数转义问题）
+        // 父进程走 Toolhelp 快照，不受 WMI 冷启动影响
+        int ppid = GetParentPid(pid);
+        if (ppid > 0) detail.ParentPid = ppid.ToString();
+
+        // 命令行只能靠 CIM 查询（脚本内只用单引号，避免参数转义问题）
         var script = "$ErrorActionPreference='SilentlyContinue';" +
                      "[Console]::OutputEncoding=[Text.Encoding]::UTF8;" +
                      $"$p=Get-CimInstance Win32_Process -Filter 'ProcessId={pid}';" +
@@ -143,7 +210,8 @@ public static class ProcessActions
                 var stderrTask = ps.StandardError.ReadToEndAsync();
 
                 string output;
-                if (ps.WaitForExit(4000))
+                // 冷启动的 WMI 查询在干净机器上可能要几秒，留足余量；超时只影响命令行
+                if (ps.WaitForExit(6000))
                 {
                     output = stdoutTask.GetAwaiter().GetResult();
                 }
@@ -160,8 +228,10 @@ public static class ProcessActions
                     var root = doc.RootElement;
                     if (root.TryGetProperty("cmd", out var cmd) && cmd.ValueKind == JsonValueKind.String)
                         detail.CommandLine = cmd.GetString() ?? "";
-                    if (root.TryGetProperty("ppid", out var ppid) && ppid.ValueKind == JsonValueKind.Number)
-                        detail.ParentPid = ppid.GetInt32().ToString();
+                    if (detail.ParentPid.Length == 0 &&
+                        root.TryGetProperty("ppid", out var parentFromCim) &&
+                        parentFromCim.ValueKind == JsonValueKind.Number)
+                        detail.ParentPid = parentFromCim.GetInt32().ToString();
                 }
             }
         }
