@@ -1,0 +1,43 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.{md,yml,yaml,json}]
+end_of_line = lf
+indent_size = 2
+
+[*.py]
+end_of_line = lf
+indent_size = 4
+
+[*.cs]
+# 使用排序后的 using，System 命名空间置顶
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = false
+
+# 大括号风格
+csharp_new_line_before_open_brace = all
+csharp_new_line_before_else = true
+csharp_new_line_before_catch = true
+csharp_new_line_before_finally = true
+
+# 表达式体与空行
+csharp_prefer_braces = true:suggestion
+csharp_style_expression_bodied_methods = when_on_single_line:suggestion
+dotnet_style_allow_multiple_blank_lines_experimental = false:warning
+dotnet_style_allow_trailing_whitespace_experimental = false:warning
+
+# 现代语法偏好
+csharp_style_namespace_declarations = file_scoped:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+dotnet_style_predefined_type_for_locals_parameters_members = true:suggestion
+dotnet_style_object_initializer = true:suggestion
+
+[*.xaml]
+indent_size = 4

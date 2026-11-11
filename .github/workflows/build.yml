@@ -1,0 +1,44 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and self-test
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore PortManagerWin.csproj
+
+      - name: Build
+        run: dotnet build PortManagerWin.csproj -c Release --no-restore
+
+      - name: Self-test
+        run: dotnet run --project tests/SelfTest/SelfTest.csproj -c Release
+
+      - name: Upload build output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PortManager-debug-output
+          path: |
+            bin/Release/**/PortManager.exe
+          if-no-files-found: ignore
+          retention-days: 7

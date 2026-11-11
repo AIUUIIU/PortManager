@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 安全问题 / Security report
+    url: https://github.com/AIUUIIU/PortManager/security/advisories/new
+    about: 发现漏洞请私下报告，不要开公开 Issue。Please report vulnerabilities privately.

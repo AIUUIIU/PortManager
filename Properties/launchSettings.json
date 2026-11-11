@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "PortManagerWin (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "PortManagerWin (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
