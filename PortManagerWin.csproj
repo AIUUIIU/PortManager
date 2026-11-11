@@ -27,7 +27,7 @@
 
     <!-- 项目元数据（开源信息） -->
     <Authors>AIUUIIU</Authors>
-    <Description>A fast, native Windows port viewer and releaser built with WinUI 3.</Description>
+    <Description>A WinUI 3 utility for inspecting and releasing Windows TCP/UDP ports.</Description>
     <Copyright>Copyright © 2026 AIUUIIU</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/AIUUIIU/PortManager</RepositoryUrl>

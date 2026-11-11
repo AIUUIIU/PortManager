@@ -4,9 +4,9 @@
 
 # Port Manager
 
-**See what is holding a port — and release it in one click.**
+**A WinUI 3 utility for inspecting and releasing Windows TCP/UDP ports.**
 
-A native Windows port viewer built with WinUI 3. Fast, small, no installation required.
+Lists every endpoint together with its owning process, and can terminate that process to free the port. No installation or runtime required.
 
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D4)](https://github.com/AIUUIIU/PortManager)
 [![.NET](https://img.shields.io/badge/.NET-10-512BD4)](https://dotnet.microsoft.com/)
@@ -23,21 +23,23 @@ A native Windows port viewer built with WinUI 3. Fast, small, no installation re
 
 ## English
 
-### Why
+### Overview
 
-You start your dev server and get `EADDRINUSE: address already in use :::8080`. Then you run `netstat -ano | findstr :8080`, copy the PID, run `taskkill /PID 1234 /F`, and hope you killed the right thing. Port Manager turns that into one glance and one click.
+A development server fails to start when its port is already bound (`EADDRINUSE`). Identifying the owner normally means running `netstat -ano | findstr :8080`, copying the PID, and terminating it with `taskkill /PID <pid> /F` — a sequence that is easy to get wrong when several processes are involved.
+
+Port Manager reads the system port table directly and presents the same information in one window: every endpoint with its state, local address and owning process, with the option to terminate that process from the list.
 
 ### Features
 
-- **Reads the OS port table directly** — `GetExtendedTcpTable` / `GetExtendedUdpTable` via IP Helper API, no `netstat` text parsing. A full refresh takes a few milliseconds.
-- **TCP + UDP, IPv4 + IPv6**, every connection state, deduplicated and sorted by port.
-- **Search** by port, PID or process name; filter by Listening / Established / All / Watched.
-- **Watched ports** — pin the ports you care about (8080, 3000, 5173, 8000 by default) and see *In use* or *Free* at a glance.
-- **One-click release** — kills the whole process tree, with a built-in blocklist that protects system-critical processes.
-- **Process details** — executable path, command line, start time, memory usage and parent PID.
-- **Auto refresh** every 1.5 s, toggleable.
-- **Light / dark / follow system**, **Chinese / English**, matching the Windows 11 look with Mica.
-- **Portable** — a self-contained `PortManager.exe`, no Windows App SDK runtime to install.
+- **Direct port table access** — `GetExtendedTcpTable` / `GetExtendedUdpTable` through the IP Helper API; no `netstat` output parsing. A full refresh completes in a few milliseconds.
+- **Complete coverage** — TCP and UDP, IPv4 and IPv6, every connection state; rows are deduplicated and sorted by port.
+- **Search and filter** — by port, PID or process name; filter by Listening / Established / All / Watched.
+- **Watched ports** — a card pins the most frequently used ports (8080, 3000, 5173 and 8000 by default) and reports whether each one is occupied or free.
+- **Process termination** — ends the entire process tree after checking a blocklist of system-critical processes.
+- **Process details** — executable path, command line, start time, working set and parent PID.
+- **Auto refresh** — every 1.5 s, toggleable.
+- **Theme and language** — light / dark / system, Chinese / English, both applied at runtime; Mica backdrop with the native title bar.
+- **Portable** — self-contained build; no .NET or Windows App SDK runtime to install.
 
 ### Screenshots
 
@@ -48,7 +50,7 @@ You start your dev server and get `EADDRINUSE: address already in use :::8080`. 
 ### Requirements
 
 - Windows 10 version 1809 (build 17763) or later, Windows 11 recommended
-- x64, x86 or ARM64
+- x64 or ARM64
 - Administrator rights are only needed to end processes owned by other users or by services
 
 ### Run
@@ -99,21 +101,23 @@ Issues and pull requests are welcome — please read [CONTRIBUTING.md](CONTRIBUT
 
 ## 简体中文
 
-### 为什么做这个
+### 概述
 
-启动开发服务器，报 `EADDRINUSE: address already in use :::8080`。于是 `netstat -ano | findstr :8080`，抄下 PID，再 `taskkill /PID 1234 /F`，还得担心杀错进程。Port Manager 把这一串操作变成"看一眼 + 点一下"。
+开发服务器启动失败，通常是因为目标端口已被占用（`EADDRINUSE`）。确定占用者的常规做法是执行 `netstat -ano | findstr :8080` 取得 PID，再用 `taskkill /PID <pid> /F` 结束该进程；进程较多时，这套操作容易误判。
+
+Port Manager 直接读取系统端口表，把端口状态、本地地址与所属进程集中在一个窗口中展示，并支持在列表中结束对应进程。
 
 ### 功能
 
-- **直接读取系统端口表** —— 通过 IP Helper API 调用 `GetExtendedTcpTable` / `GetExtendedUdpTable`，不解析 `netstat` 文本，整表刷新只需几毫秒。
-- **TCP / UDP、IPv4 / IPv6** 全量覆盖，包含所有连接状态，自动去重并按端口排序。
-- **搜索**端口、PID 或进程名；按「监听中 / 已连接 / 全部 / 关注的」筛选。
-- **关注端口** —— 把常用的端口（默认 8080、3000、5173、8000）钉在顶部，直接显示「占用中」还是「空闲」。
-- **一键释放** —— 结束整个进程树，内置系统关键进程黑名单，避免误杀。
-- **进程详情** —— 可执行路径、命令行、启动时间、内存占用、父进程 PID。
-- **自动刷新**（1.5 秒一次，可关闭）。
-- **深色 / 浅色 / 跟随系统**，**中文 / English** 实时切换，Mica 材质与 Windows 11 原生观感一致。
-- **免安装** —— 自包含单文件 `PortManager.exe`，不需要单独安装 Windows App SDK 运行时。
+- **直接读取端口表** —— 通过 IP Helper API 调用 `GetExtendedTcpTable` / `GetExtendedUdpTable`，不解析 `netstat` 文本输出，整表刷新在毫秒级完成。
+- **完整覆盖** —— TCP 与 UDP、IPv4 与 IPv6、全部连接状态；结果自动去重并按端口排序。
+- **搜索与筛选** —— 按端口、PID 或进程名搜索；按监听中 / 已连接 / 全部 / 关注的筛选。
+- **关注端口** —— 以卡片形式固定常用端口（默认 8080、3000、5173、8000），并显示各自是否被占用。
+- **结束进程** —— 结束整个进程树，执行前先对照系统关键进程黑名单。
+- **进程详情** —— 可执行路径、命令行、启动时间、内存占用与父进程 PID。
+- **自动刷新** —— 每 1.5 秒一次，可关闭。
+- **主题与语言** —— 深色 / 浅色 / 跟随系统，中文 / English，均支持运行时切换；界面采用 Mica 材质与原生标题栏。
+- **免安装** —— 自包含构建，无需安装 .NET 或 Windows App SDK 运行时。
 
 ### 截图
 
@@ -124,12 +128,12 @@ Issues and pull requests are welcome — please read [CONTRIBUTING.md](CONTRIBUT
 ### 系统要求
 
 - Windows 10 1809（17763）及以上，推荐 Windows 11
-- x64 / x86 / ARM64
+- x64 或 ARM64
 - 仅当需要结束其他用户或系统服务占用的进程时，才需要管理员权限
 
 ### 运行
 
-下载 Release 中的压缩包，解压后双击 `PortManager.exe` 即可，不写注册表、不留安装残留。
+下载 Release 中的压缩包，解压后运行 `PortManager.exe`。不写注册表，不产生安装残留。
 
 ### 从源码构建
 
